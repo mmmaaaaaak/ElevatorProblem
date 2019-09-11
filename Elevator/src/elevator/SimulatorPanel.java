@@ -5,121 +5,52 @@
  */
 package elevator;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.util.Timer;
-import java.util.TimerTask;
+import javax.swing.JToggleButton;
 
 /**
  *
  * @author Mark Masone
  */
-public class ElevatorPanel extends javax.swing.JPanel {
+public class SimulatorPanel extends javax.swing.JPanel implements FloorRequestListener,ElevatorMovementListener {
 
     /**
      * Creates new form ElevatorPanel
      */
-    public ElevatorPanel() {
+    
+    private final ElevatorShaft elevatorShaft;
+    private final Elevator elevator;
+    
+    public SimulatorPanel(ElevatorShaft elevatorShaft,Elevator elevator) {
         initComponents();
-        highestFloor = 1;
-        lowestFloor = 1;
-        up = new boolean[]{false,false,false,false,false,false};
-        down = new boolean[]{false,false,false,false,false,false};
-        moving = false;
-        direction = true;
-        elevatorY = 375;
-        upButtons = new javax.swing.JToggleButton[]{upButton1,upButton2,upButton3,upButton4,upButton5};
-        downButtons = new javax.swing.JToggleButton[]{downButton2,downButton3,downButton4,downButton5,downButton6};
+        elevatorShaft.setButtons(
+            new JToggleButton[]{upButton1,upButton2,upButton3,upButton4,upButton5},
+            new JToggleButton[]{downButton2,downButton3,downButton4,downButton5,downButton6}
+        );
+        elevator.setButtons(new JToggleButton[]{floor1Button,floor2Button,floor3Button,floor4Button,floor5Button,floor6Button});
+        this.elevatorShaft = elevatorShaft;
+        this.elevator = elevator;
+    }
+    
+    @Override
+    public void floorRequested(int floor) {
+        repaint();
+    }
+    
+    @Override
+    public void elevatorMoved() {
+        repaint();
     }
     
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D)g;
-        g2d.setColor(Color.red);
-        g2d.drawRect(100, elevatorY, 150, 40);
-        g2d.drawString("highest floor: " + highestFloor, 300, 60);
-        g2d.drawString("lowest floor: " + lowestFloor, 300, 80);
-        for(int i = 0; i < 6; i++) {
-            int y = 80 + i * 64;
-            g2d.drawString("up: " + up[5 - i], 150, y - 10);
-            g2d.drawString("down: " + down[5 - i], 150, y + 10);
-            g2d.drawString((6 - i) + "", 110, y);
-        }
+        elevator.draw(g2d);
+        elevatorShaft.draw(g2d);
     }
     
-    private void buttonPressed(int floor,boolean direction) {
-        if(direction) {
-            up[floor - 1] = true;
-            upButtons[floor - 1].setEnabled(false);
-        } else {
-            down[floor - 1] = true;
-            downButtons[floor - 2].setEnabled(false);
-        }
-        if(highestFloor < floor)
-            highestFloor = floor;
-        if(lowestFloor > floor)
-            lowestFloor = floor;
-        if(!moving)
-            startElevator(true);
-        repaint();
-    }
-    
-    private void startElevator(boolean direction) {
-        this.direction = direction;
-        this.moving = true;
-        timer = new Timer(); 
-        task = new MoveElevator(this); 
-        timer.schedule(task, 0, 20); 
-    }
-    
-    public void moveElevator() {
-        int floor = 6 - ((elevatorY + 7) / 64);
-        if(direction && (up[floor - 1] || (floor == 6 && down[floor - 1]))) {
-            task.cancel();
-            timer.cancel();
-            timer = new Timer();
-            task = new MoveElevator(this);
-            timer.schedule(task, 2000, 20);
-            if(up[floor - 1]) { // up button pressed on this floor
-                up[floor - 1] = false;
-                upButtons[floor - 1].setSelected(false);
-                upButtons[floor - 1].setEnabled(true);
-            }
-            if(floor == 6) { // top floor down button pressed
-                down[floor - 1] = false;
-                downButtons[floor - 2].setSelected(false);
-                downButtons[floor - 2].setEnabled(true);
-            }
-        } else if(!direction && down[floor]) {
-            task.cancel();
-            timer.cancel();
-            timer = new Timer();
-            task = new MoveElevator(this);
-            timer.schedule(task, 2000, 20);
-            down[floor] = false;
-            downButtons[floor - 1].setSelected(false);
-            downButtons[floor - 1].setEnabled(true);
-            elevatorY -= 1;
-        } else if(!direction && floor == 0) {
-            task.cancel();
-            timer.cancel();
-            moving = false;
-            highestFloor = 1;
-            elevatorY -= 1;
-        } else {
-            if(floor == highestFloor)
-                direction = false;
-            if(direction) {
-                elevatorY -= 1;
-            } else {
-                elevatorY += 1;
-            }
-        }
-        repaint();
-    }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -139,6 +70,13 @@ public class ElevatorPanel extends javax.swing.JPanel {
         downButton3 = new javax.swing.JToggleButton();
         upButton2 = new javax.swing.JToggleButton();
         downButton2 = new javax.swing.JToggleButton();
+        jPanel1 = new javax.swing.JPanel();
+        floor6Button = new javax.swing.JToggleButton();
+        floor5Button = new javax.swing.JToggleButton();
+        floor4Button = new javax.swing.JToggleButton();
+        floor3Button = new javax.swing.JToggleButton();
+        floor2Button = new javax.swing.JToggleButton();
+        floor1Button = new javax.swing.JToggleButton();
 
         upButton1.setText("Up");
         upButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -210,6 +148,83 @@ public class ElevatorPanel extends javax.swing.JPanel {
             }
         });
 
+        jPanel1.setBorder(javax.swing.BorderFactory.createBevelBorder(javax.swing.border.BevelBorder.RAISED));
+
+        floor6Button.setText("6");
+        floor6Button.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                floor6ButtonActionPerformed(evt);
+            }
+        });
+
+        floor5Button.setText("5");
+        floor5Button.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                floor5ButtonActionPerformed(evt);
+            }
+        });
+
+        floor4Button.setText("4");
+        floor4Button.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                floor4ButtonActionPerformed(evt);
+            }
+        });
+
+        floor3Button.setText("3");
+        floor3Button.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                floor3ButtonActionPerformed(evt);
+            }
+        });
+
+        floor2Button.setText("2");
+        floor2Button.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                floor2ButtonActionPerformed(evt);
+            }
+        });
+
+        floor1Button.setText("1");
+        floor1Button.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                floor1ButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(floor2Button, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(floor3Button, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(floor4Button, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(floor5Button, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(floor6Button, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(floor1Button, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(floor6Button)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(floor5Button)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(floor4Button)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(floor3Button)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(floor2Button)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(floor1Button)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -230,7 +245,9 @@ public class ElevatorPanel extends javax.swing.JPanel {
                             .addComponent(downButton4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(upButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(downButton3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap(331, Short.MAX_VALUE))
+                .addGap(217, 217, 217)
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(308, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -240,19 +257,22 @@ public class ElevatorPanel extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(upButton5)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(downButton5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(upButton4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(downButton4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(upButton3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(downButton3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(upButton2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(downButton2)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(downButton5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(upButton4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(downButton4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(upButton3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(downButton3)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(upButton2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(downButton2))
+                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(upButton1)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -260,44 +280,68 @@ public class ElevatorPanel extends javax.swing.JPanel {
     }// </editor-fold>//GEN-END:initComponents
 
     private void downButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downButton6ActionPerformed
-        buttonPressed(6,false);
+        elevatorShaft.buttonPressed(6,false);
     }//GEN-LAST:event_downButton6ActionPerformed
 
     private void downButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downButton5ActionPerformed
-        buttonPressed(5,false);
+        elevatorShaft.buttonPressed(5,false);
     }//GEN-LAST:event_downButton5ActionPerformed
 
     private void upButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_upButton3ActionPerformed
-        buttonPressed(3,true);
+        elevatorShaft.buttonPressed(3,true);
     }//GEN-LAST:event_upButton3ActionPerformed
 
     private void downButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downButton3ActionPerformed
-        buttonPressed(3,false);
+        elevatorShaft.buttonPressed(3,false);
     }//GEN-LAST:event_downButton3ActionPerformed
 
     private void downButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downButton2ActionPerformed
-        buttonPressed(2,false);
+        elevatorShaft.buttonPressed(2,false);
     }//GEN-LAST:event_downButton2ActionPerformed
 
     private void upButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_upButton5ActionPerformed
-        buttonPressed(5,true);
+        elevatorShaft.buttonPressed(5,true);
     }//GEN-LAST:event_upButton5ActionPerformed
 
     private void upButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_upButton4ActionPerformed
-        buttonPressed(4,true);
+        elevatorShaft.buttonPressed(4,true);
     }//GEN-LAST:event_upButton4ActionPerformed
 
     private void downButton4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_downButton4ActionPerformed
-        buttonPressed(4,false);
+        elevatorShaft.buttonPressed(4,false);
     }//GEN-LAST:event_downButton4ActionPerformed
 
     private void upButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_upButton2ActionPerformed
-        buttonPressed(2,true);
+        elevatorShaft.buttonPressed(2,true);
     }//GEN-LAST:event_upButton2ActionPerformed
 
     private void upButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_upButton1ActionPerformed
-        buttonPressed(1,true);
+        elevatorShaft.buttonPressed(1,true);
     }//GEN-LAST:event_upButton1ActionPerformed
+
+    private void floor6ButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_floor6ButtonActionPerformed
+        elevator.buttonPressed(6);
+    }//GEN-LAST:event_floor6ButtonActionPerformed
+
+    private void floor5ButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_floor5ButtonActionPerformed
+        elevator.buttonPressed(5);
+    }//GEN-LAST:event_floor5ButtonActionPerformed
+
+    private void floor4ButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_floor4ButtonActionPerformed
+        elevator.buttonPressed(4);
+    }//GEN-LAST:event_floor4ButtonActionPerformed
+
+    private void floor3ButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_floor3ButtonActionPerformed
+        elevator.buttonPressed(3);
+    }//GEN-LAST:event_floor3ButtonActionPerformed
+
+    private void floor2ButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_floor2ButtonActionPerformed
+        elevator.buttonPressed(2);
+    }//GEN-LAST:event_floor2ButtonActionPerformed
+
+    private void floor1ButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_floor1ButtonActionPerformed
+        elevator.buttonPressed(1);
+    }//GEN-LAST:event_floor1ButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -306,21 +350,17 @@ public class ElevatorPanel extends javax.swing.JPanel {
     private javax.swing.JToggleButton downButton4;
     private javax.swing.JToggleButton downButton5;
     private javax.swing.JToggleButton downButton6;
+    private javax.swing.JToggleButton floor1Button;
+    private javax.swing.JToggleButton floor2Button;
+    private javax.swing.JToggleButton floor3Button;
+    private javax.swing.JToggleButton floor4Button;
+    private javax.swing.JToggleButton floor5Button;
+    private javax.swing.JToggleButton floor6Button;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JToggleButton upButton1;
     private javax.swing.JToggleButton upButton2;
     private javax.swing.JToggleButton upButton3;
     private javax.swing.JToggleButton upButton4;
     private javax.swing.JToggleButton upButton5;
     // End of variables declaration//GEN-END:variables
-    private int highestFloor;
-    private int lowestFloor;
-    private boolean[] up;
-    private boolean[] down;
-    private boolean moving;
-    private boolean direction;
-    private int elevatorY;
-    private Timer timer;
-    private TimerTask task;
-    private javax.swing.JToggleButton[] upButtons;
-    private javax.swing.JToggleButton[] downButtons;
 }
